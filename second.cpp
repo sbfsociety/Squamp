@@ -251,6 +251,12 @@ void Compensate(Line& line, vector<Line>& lines) {
         lines.push_back(Line({line.begin.x, line.begin.y}, {line.begin.x + plWidth, line.begin.y}, false));
         lines.push_back(Line({line.end.x, line.end.y}, {line.end.x + plWidth, line.end.y}, false));
     }
+
+    if (line.horizontal) {
+        float plWidth = 4.f;
+        lines.push_back(Line({line.begin.x, line.begin.y}, {line.begin.x, line.begin.y + plWidth}, false));
+        lines.push_back(Line({line.end.x, line.end.y}, {line.end.x, line.end.y  + plWidth}, false));
+    }
 }
 
 
