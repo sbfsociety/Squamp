@@ -23,7 +23,7 @@ if you don't care about the build you just need this folder structure:
   |-System.hpp
 
 
-If you ecounter bugs, please reach out at:
+If you ecounter bugs, please reach out at: devsbf0@gmail.com
 
 
 
