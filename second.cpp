@@ -50,7 +50,7 @@ public:
         state = 0;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)){state = 1; pos.x -= 5.f;}
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)){state = 2; pos.x += 5.f;}
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && onGround){if (add < 1000) add++; space = true;}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && onGround){if (add < 100) add++; space = true;}
         else if (space && !onGround) {
             //cout << "Space held but NOT grounded! pos.y: " << pos.y << endl;
         }
@@ -64,8 +64,15 @@ public:
             pos.y-=20;
             // cout << "JUMPING! onGround: " << onGround << endl;
             onGround = false;
+            if (-0.8 * ::val - 10 > -30.f) {
+                vel.y = -0.8 * ::val - 10;
+            }
+            else {
+                vel.y = -30.f;
+            }
+            // cout << vel.y << endl;
 
-            vel.y = -0.8 * ::val - 10;
+
             add = 0;
             ::val = 0;
             release = false;
@@ -142,6 +149,8 @@ public:
     bool horizontal = false;
     bool diagonal = false;
     bool col = false;
+    bool flag = false;
+    bool draw = true;
 
     Line(Vec2 _b, Vec2 _e) : begin(_b), end(_e) {
         if (_b.x == _e.x){vertical = true; /*cout << "Vertical";*/}
@@ -149,15 +158,31 @@ public:
         else {diagonal = true; /*cout << "Diagonal";*/}
     }
 
+    Line(Vec2 _b, Vec2 _e, bool _draw) : begin(_b), end(_e), draw(_draw) {
+        if (_b.x == _e.x){vertical = true; /*cout << "Vertical";*/}
+        else if (_b.y == _e.y){horizontal = true; /*cout <<"Horizontal";*/}
+        else {diagonal = true; /*cout << "Diagonal";*/}
+    }
+
     void Collide(Player& player) {
+        flag = false;
         col = false;
         if (horizontal) {
-            if ((player.old.y <= begin.y && player.get().y >= begin.y) &&
-          (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
+            if ((player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
+                if (player.old.y > end.y + player.playerSize.y && player.get().y <= begin.y + 3 + player.playerSize.y) {
+                    player.set({player.get().x, begin.y + player.playerSize.y + 8});
+                    flag = true;
+                    player.Grounded(false);
+                }
+            }
+            // you bong bong your head here
+            if ((player.old.y <= begin.y && player.get().y >= begin.y && !flag) &&
+                (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
                 player.Grounded(true);
                 player.set({player.get().x, begin.y - 2});
                 col = true;
-          }
+                }
+
         }
         if (abs(player.get().y - begin.y) <= 5 &&
                 (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
@@ -166,14 +191,20 @@ public:
             col = true;
                 }
         if (vertical) {
-            if (player.get().y >= end.y && player.get().y <= begin.y) {
+            if ((player.get().y >= end.y && player.get().y <= begin.y) ||
+            (player.old.y >= end.y && player.old.y <= begin.y)) {
                 if (player.old.x < begin.x && player.get().x >= begin.x) {
-                player.set({begin.x - 3, player.get().y});
+                    player.set({begin.x - 3, player.get().y});
                 }
-                else if (player.old.x > begin.x + player.playerSize.x +3 && player.get().x <= begin.x + player.playerSize.x+3) {
-                player.set({begin.x  + 8 + player.playerSize.x , player.get().y});
+                else if (player.old.x > begin.x + player.playerSize.x + 3 && player.get().x <= begin.x + player.playerSize.x + 3) {
+                    player.set({begin.x + 8 + player.playerSize.x, player.get().y});
                 }
             }
+
+            //if (player.old.y > end.y + player.playerSize.y && player.get().y <= begin.y + 3 + player.playerSize.y) {
+            //    if (player.get().x >= begin.x && player.get().x <= begin.x + 4 - player.playerSize.x) {player.set({player.get().x, begin.y + player.playerSize.y + 8}); flag = true; player.Grounded(false);}
+            //}
+
 
         }
 
@@ -199,7 +230,8 @@ public:
         line.setFillColor(sf::Color::Red);
         line.setOutlineColor(sf::Color::Black);
         line.setOutlineThickness(2.f);
-        window.draw(line);
+        if (draw)
+            window.draw(line);
     }
 };
 
@@ -213,6 +245,13 @@ void Lines(sf::RenderWindow& window, vector<Line>& lines, Player& player) {
     if (colCount == 0) {player.Grounded(false);}
 }
 
+void Compensate(Line& line, vector<Line>& lines) {
+    if (line.vertical) {
+        float plWidth = 4.f; // match player width
+        lines.push_back(Line({line.begin.x, line.begin.y}, {line.begin.x + plWidth, line.begin.y}, false));
+        lines.push_back(Line({line.end.x, line.end.y}, {line.end.x + plWidth, line.end.y}, false));
+    }
+}
 
 
 int main(){
@@ -234,6 +273,11 @@ int main(){
     lines.push_back(Line({500, 400}, {500, 300}));
     lines.push_back(Line({400, 300}, {500, 300}));
 
+    int originalSize = lines.size();
+    for (int i = 0; i < originalSize; i++) {
+        Compensate(lines[i], lines);
+    }
+
 
     while(window.isOpen()) {
         ::dt = clock.restart().asSeconds();
@@ -243,7 +287,9 @@ int main(){
                 window.close();
             if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
                 if (keyReleased->code == sf::Keyboard::Key::Space && player.Ground()) {
-                    ::val = player.getAdd();
+                    if (player.getAdd() < 100){::val = player.getAdd();}
+                    else{::val = player.getAdd();}
+
                     // cout << "Charge: " << player.getAdd() << " Ground: " << player.Ground() << endl;
                     //cout << player.getAdd() << endl;
                     ::release = true;
