@@ -24,3 +24,14 @@ if you don't care about the build you just need this folder structure:
 
 
 If you ecounter bugs, please reach out at:
+
+
+
+VERSION PATCHES:
+  2.0:
+    -added limit to Player's jump velocity, set to -30.f
+    -added a function Compensate() to add horizontal lines at the edges of vertical lines
+    -added collision for hitting your head against a horizontal platform
+  2.1:
+    -upgraded Compenstate() to place vertical lines at the edges of horizontal lines
+    -added a constructor overload with a boolean at the end for drawining it (so the lines on edges woudnt be drawn)
