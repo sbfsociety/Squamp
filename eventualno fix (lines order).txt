@@ -1,0 +1,35 @@
+if (horizontal && _b.x < _e.x) {
+            helper = {_b.x, _b.y};
+            _b = {_e.x, _e.y};
+            _e = {helper.x, helper.y};
+}
+if (vertical && _b.y > _e.y) {
+    helper = {_b.y, _b.y};
+    _b = {_e.x, _e.y};
+    _e = {helper.x, helper.y};
+}
+
+
+// GOTOVA VERZIJA
+
+```
+Line(Vec2 _b, Vec2 _e) : begin(_b), end(_e) {
+    if (_b.x == _e.x){vertical = true; /*cout << "Vertical";*/}
+    else if (_b.y == _e.y){horizontal = true; /*cout <<"Horizontal";*/}
+    else {diagonal = true; /*cout << "Diagonal";*/}
+    if (horizontal && _b.x > _e.x) {
+        helper = {_b.x, _b.y};
+        _b = {_e.x, _e.y};
+        _e = {helper.x, helper.y};
+    }
+    if (vertical && _b.y < _e.y) {
+        helper = {_b.x, _b.y};
+        _b = {_e.x, _e.y};
+        _e = {helper.x, helper.y};
+    }
+    this->begin = {_b.x, _b.y};
+    this->end = {_e.x, _e.y};
+}
+```
+
+like this? my logic doesnt break in this way

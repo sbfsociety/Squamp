@@ -1,0 +1,268 @@
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include <SFML/System.hpp>
+#include <iostream>
+#include <vector>
+#include <array>
+#include <cmath>
+#include <ctime>
+bool ground = true;
+using namespace std;
+bool yes = false;
+
+float dt;
+
+
+float val = 0;
+bool release = false;
+
+struct Vec2{
+    float x, y;
+};
+
+class Player{
+private:
+    bool alive = true;
+    bool onGround = false;
+    bool jump = false;
+    int state = 0; // 0 - no, 1 - Left, 2 - Right
+
+    float add;
+
+    Vec2 save;
+
+    Vec2 vel = {0.f, 0.f};
+    Vec2 pos;
+    Vec2 gravity = {0.f, 2.f};
+    bool space = false;
+public:
+    Player(Vec2 _p) : pos(_p), save(_p){};
+
+    Vec2 playerSize = {20.f, 30.f};
+
+    Vec2 old = {pos.x, pos.y};
+
+    Vec2 newPos = {pos.x, pos.y};
+
+    void Move(){
+        space = (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space));
+
+        state = 0;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)){state = 1; pos.x -= 5.f;}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)){state = 2; pos.x += 5.f;}
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && onGround){if (add < 1000) add++; space = true;}
+        else if (space && !onGround) {
+            //cout << "Space held but NOT grounded! pos.y: " << pos.y << endl;
+        }
+
+
+    }
+
+    void Update(){
+        if (release && ::yes) {
+            old.y-=1;
+            pos.y-=20;
+            // cout << "JUMPING! onGround: " << onGround << endl;
+            onGround = false;
+
+            vel.y = -0.8 * ::val - 10;
+            add = 0;
+            ::val = 0;
+            release = false;
+            ::yes = false;
+
+        }
+        old = {pos.x, pos.y};
+        // onGround = false;
+
+        Move();
+
+        if (onGround){vel.y = 0;}
+
+        if (!onGround) {
+            vel.y += gravity.y;
+            pos.y += vel.y;
+        }
+
+        //if (pos.y > 800.f) { pos = {save.x, save.y}; vel = {0.f, 0.f}; }
+
+
+    }
+
+    void Draw(sf::RenderWindow& window){
+
+        float small = 10;
+        sf::ConvexShape player;
+        player.setPointCount(4);
+        if (space) {
+            player.setPoint(0, sf::Vector2f(pos.x - playerSize.x, pos.y - playerSize.y + small));
+            player.setPoint(1, sf::Vector2f(pos.x, pos.y - playerSize.y + small));
+            //cout << "Mario\n";
+        }
+        else{
+
+
+            player.setPoint(0, sf::Vector2f(pos.x - playerSize.x, pos.y - playerSize.y));
+            player.setPoint(1, sf::Vector2f(pos.x, pos.y - playerSize.y));
+        }
+        player.setPoint(2, sf::Vector2f(pos.x, pos.y));
+        player.setPoint(3, sf::Vector2f(pos.x - playerSize.x, pos.y));
+        player.setFillColor(sf::Color::Red);
+        player.setOutlineColor(sf::Color::Black);
+        player.setOutlineThickness(2.f);
+        window.draw(player);
+    }
+
+
+    float getAdd() const {return add;}
+
+    Vec2 speedy() const {return vel;}
+    void speedu(Vec2 _p){vel = {_p.x, _p.y};}
+
+    bool Space() const {return space;}
+
+    bool Ground() const {return onGround;}
+
+    void Grounded(bool a){onGround = a;}
+
+    int State() const {return state;}
+
+    Vec2 get() const {return pos;}
+
+    void set(Vec2 _p){pos = {_p.x, _p.y};}
+
+    Vec2 saved() const {return save;}
+};
+
+class Line {
+public:
+    Vec2 helper;
+    Vec2 begin, end;
+    bool vertical = false;
+    bool horizontal = false;
+    bool diagonal = false;
+    bool col = false;
+
+    Line(Vec2 _b, Vec2 _e) : begin(_b), end(_e) {
+        if (_b.x == _e.x){vertical = true; /*cout << "Vertical";*/}
+        else if (_b.y == _e.y){horizontal = true; /*cout <<"Horizontal";*/}
+        else {diagonal = true; /*cout << "Diagonal";*/}
+    }
+
+    void Collide(Player& player) {
+        col = false;
+        if (horizontal) {
+            if ((player.old.y <= begin.y && player.get().y >= begin.y) &&
+          (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
+                player.Grounded(true);
+                player.set({player.get().x, begin.y - 2});
+                col = true;
+          }
+        }
+        if (abs(player.get().y - begin.y) <= 5 &&
+                (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
+            player.Grounded(true);
+            // cout << "FIX\n";
+            col = true;
+                }
+        if (vertical) {
+            if (player.get().y >= end.y && player.get().y <= begin.y) {
+                if (player.old.x < begin.x && player.get().x >= begin.x) {
+                player.set({begin.x - 3, player.get().y});
+                }
+                else if (player.old.x > begin.x + player.playerSize.x +3 && player.get().x <= begin.x + player.playerSize.x+3) {
+                player.set({begin.x  + 8 + player.playerSize.x , player.get().y});
+                }
+            }
+
+        }
+
+
+    }
+
+    void Draw(sf::RenderWindow& window) {
+        sf::ConvexShape line;
+        float width = 4;
+        line.setPointCount(4);
+        if (horizontal){
+        line.setPoint(0, {begin.x, begin.y + width});
+        line.setPoint(1, {end.x, begin.y + width});
+        line.setPoint(2, {end.x, end.y});
+        line.setPoint(3, {begin.x, end.y});
+        }
+        if (vertical) {
+            line.setPoint(0, {begin.x, begin.y});
+            line.setPoint(1, {begin.x + width, begin.y});
+            line.setPoint(2, {end.x + width, end.y});
+            line.setPoint(3, {end.x, end.y});
+        }
+        line.setFillColor(sf::Color::Red);
+        line.setOutlineColor(sf::Color::Black);
+        line.setOutlineThickness(2.f);
+        window.draw(line);
+    }
+};
+
+void Lines(sf::RenderWindow& window, vector<Line>& lines, Player& player) {
+    int colCount = 0;
+    for (auto& line : lines) {
+        line.Collide(player);
+        if (line.horizontal && line.col){colCount++;}
+        line.Draw(window);
+    }
+    if (colCount == 0) {player.Grounded(false);}
+}
+
+
+
+int main(){
+    sf::RenderWindow window(sf::VideoMode({1000, 800}), "Jump king");
+    sf::Clock clock;
+    window.setFramerateLimit(60);
+    Player player({475.f, 400.f});
+
+    vector<Line> lines;
+    //lines.push_back(Line({100, 700}, {800, 700}));
+    //lines.push_back(Line({100, 700}, {100, 300}));
+    //lines.push_back(Line({800, 700},{800, 300}));
+    lines.push_back(Line({300, 700}, {500, 700}));
+    lines.push_back(Line({500, 700}, {500, 500}));
+    lines.push_back(Line({500, 500}, {700, 500}));
+    lines.push_back(Line({700, 500}, {700, 400}));
+    lines.push_back(Line({300, 700}, {300, 600}));
+    lines.push_back(Line({200, 600},{300, 600}));
+    lines.push_back(Line({500, 400}, {500, 300}));
+    lines.push_back(Line({400, 300}, {500, 300}));
+
+
+    while(window.isOpen()) {
+        ::dt = clock.restart().asSeconds();
+
+        while(auto event = window.pollEvent()){
+            if(event->is<sf::Event::Closed>())
+                window.close();
+            if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
+                if (keyReleased->code == sf::Keyboard::Key::Space && player.Ground()) {
+                    ::val = player.getAdd();
+                    // cout << "Charge: " << player.getAdd() << " Ground: " << player.Ground() << endl;
+                    //cout << player.getAdd() << endl;
+                    ::release = true;
+                    // cout << "Jump";
+                    ::yes = player.Ground();
+                }
+            }
+        }
+
+        window.clear(sf::Color::White);
+
+
+        player.Update();
+        Lines(window, lines, player);
+        if (player.get().y > 900.f && !player.Ground()){player.set({player.saved().x, player.saved().y});player.speedu({0.f, 0.f});}
+        player.Draw(window);
+
+        window.display();
+    }
+
+    return 0;
+}
