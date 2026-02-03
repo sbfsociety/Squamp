@@ -168,18 +168,25 @@ public:
         flag = false;
         col = false;
         if (horizontal) {
+			// you bong bong your head here
             if ((player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
                 if (player.old.y > end.y + player.playerSize.y && player.get().y <= begin.y + 3 + player.playerSize.y) {
-                    player.set({player.get().x, begin.y + player.playerSize.y + 8});
+                    player.set({player.get().x, begin.y + player.playerSize.y + 4});
                     flag = true;
                     player.Grounded(false);
                 }
+
             }
-            // you bong bong your head here
+
+			if(player.get().x > begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275){
+				if(abs(player.get().y - begin.y) <= 5 && player.Ground()){player.set({player.get().x, begin.y  + 4});}
+
+			}
+
             if ((player.old.y <= begin.y && player.get().y >= begin.y && !flag) &&
                 (player.get().x >= begin.x - player.playerSize.x*0.24 && player.get().x <= end.x + player.playerSize.x*1.275)) {
                 player.Grounded(true);
-                player.set({player.get().x, begin.y - 2});
+                player.set({player.get().x, begin.y - 4});
                 col = true;
                 }
 
@@ -205,11 +212,38 @@ public:
             //    if (player.get().x >= begin.x && player.get().x <= begin.x + 4 - player.playerSize.x) {player.set({player.get().x, begin.y + player.playerSize.y + 8}); flag = true; player.Grounded(false);}
             //}
 
-
         }
+		/*if (diagonal) {
+    	// funkcija za y koordinatu za x koordinatu
+    		float slope = (end.y - begin.y) / (end.x - begin.x);
+    		float intercept = begin.y - slope * begin.x;
 
+    	// da li je igrac dovoljno blizu u njenom rangu
+    	if (player.get().x >= min(begin.x, end.x) - player.playerSize.x &&
+        	player.get().x <= max(begin.x, end.x)) {
 
+        // y pozicija za dijagonalu
+        	float lineY = slope * player.get().x + intercept;
+
+        	// pad na dijagonalu
+        	if (player.old.y <= lineY && player.get().y >= lineY - 5) {
+            	player.Grounded(true);
+            	player.set({player.get().x, lineY - 2});
+            	col = true;
+        	}
+
+        	//bong bong za dijagonalu
+        	if (player.old.y >= lineY + player.playerSize.y &&
+            	player.get().y <= lineY + player.playerSize.y + 5) {
+            	player.set({player.get().x, lineY + player.playerSize.y + 4});
+            	flag = true;
+            	player.Grounded(false);
+        }*/
     }
+
+
+
+
 
     void Draw(sf::RenderWindow& window) {
         sf::ConvexShape line;
@@ -227,6 +261,19 @@ public:
             line.setPoint(2, {end.x + width, end.y});
             line.setPoint(3, {end.x, end.y});
         }
+		/*if(diagonal){
+			 float width = 4;
+    		 float dx = end.x - begin.x;
+    		float dy = end.y - begin.y;
+    		float len = sqrt(dx*dx + dy*dy);
+    		float offsetX = -dy / len * width;
+    		float offsetY = dx / len * width;
+
+    		line.setPoint(0, {begin.x, begin.y});
+    		line.setPoint(1, {begin.x + offsetX, begin.y + offsetY});
+    		line.setPoint(2, {end.x + offsetX, end.y + offsetY});
+    		line.setPoint(3, {end.x, end.y});
+		}*/
         line.setFillColor(sf::Color::Red);
         line.setOutlineColor(sf::Color::Black);
         line.setOutlineThickness(2.f);
@@ -253,11 +300,18 @@ void Compensate(Line& line, vector<Line>& lines) {
     }
 
     if (line.horizontal) {
-        float plWidth = 4.f;
-        lines.push_back(Line({line.begin.x, line.begin.y}, {line.begin.x, line.begin.y + plWidth}, false));
-        lines.push_back(Line({line.end.x, line.end.y}, {line.end.x, line.end.y  + plWidth}, false));
-    }
+    	float plWidth = 4.f;
+    	lines.push_back(Line( {line.begin.x, line.end.y  + plWidth},{line.begin.x, line.begin.y}, true));
+    	lines.push_back(Line({line.end.x, line.end.y + plWidth}, {line.end.x, line.end.y}, true));
+	}
 }
+
+	//if(line.diagonal) {
+		//float plWidth = 4.f;
+        //lines.push_back(Line({line.begin.x, line.begin.y}, {line.begin.x, line.begin.y + plWidth}, false));
+        //lines.push_back(Line({line.end.x, line.end.y}, {line.end.x, line.end.y  + plWidth}, false));
+	//}
+
 
 
 int main(){
@@ -270,7 +324,7 @@ int main(){
     //lines.push_back(Line({100, 700}, {800, 700}));
     //lines.push_back(Line({100, 700}, {100, 300}));
     //lines.push_back(Line({800, 700},{800, 300}));
-    lines.push_back(Line({300, 700}, {500, 700}));
+    /*lines.push_back(Line({300, 700}, {500, 700}));
     lines.push_back(Line({500, 700}, {500, 500}));
     lines.push_back(Line({500, 500}, {700, 500}));
     lines.push_back(Line({700, 500}, {700, 400}));
@@ -278,6 +332,13 @@ int main(){
     lines.push_back(Line({200, 600},{300, 600}));
     lines.push_back(Line({500, 400}, {500, 300}));
     lines.push_back(Line({400, 300}, {500, 300}));
+	lines.push_back(Line({500, 300}, {700, 200}));*/
+
+	lines.push_back(Line({300, 700},{400, 700}));
+	lines.push_back(Line({400, 703},{500, 703}));
+	//lines.push_back(Line({400, 703},{400, 630}));
+
+
 
     int originalSize = lines.size();
     for (int i = 0; i < originalSize; i++) {
