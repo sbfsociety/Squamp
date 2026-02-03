@@ -1,6 +1,8 @@
 # Squamp
 A platformer game made in C++ and SFML. More info in the README.md.
 
+This is just the base mechanics. The full game is on my other repo SquampWH (Squamp (W)ith (G)raphics). If you use this credit me for the physics and game mechanics.
+
 Requirements for build:
   gcc version 15.2.0
 
